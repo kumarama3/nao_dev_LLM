@@ -1,0 +1,2 @@
+sudo rabbitmq-server
+
