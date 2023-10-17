@@ -24,16 +24,12 @@ end_time = time.time()
 
 while True:
     server = False
-    pcm = audio_stream.read(512)
-    pcm = struct.unpack_from("h" * 512, pcm)
-    serialized_data = json.dumps(pcm)
+    
+    if wake_word_detected and (time.time() - end_time) > 4 :
+        wake_word_detected = False
 
-    response = requests.post("http://128.205.43.183:5006/wake_word", files={'audio': serialized_data } )
-    if response.status_code == 200:
-        transcription = response.json()
-
-    if transcription >= 0 and (time.time() - end_time) > 4 :
         nao.sayText_no_action("Hello")
+        
         record_audio("audio/recording.wav", audio_clip_path, 5)
         
         start_time = time.time()
@@ -51,13 +47,21 @@ while True:
 
 
         if not out['Auth']:
+            
             nao.sayText( "You are not authorized user" ) 
             nao.posture.goToPosture("Stand" , 0.4)
             nao.ledStopListening()  
-        else :         
+
+        else : 
+
             start_time = time.time()
+            
             nao_do(out)
+            
             elapsed_time = time.time() - start_time
             print('Total Time taken by robot : {:.4f} seconds'.format(elapsed_time))
         end_time = time.time()
+
+        msg = "done"
+        rabbit_channel.basic_publish(exchange='', routing_key='py2_py3_queue', body=msg)
 

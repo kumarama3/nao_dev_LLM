@@ -6,15 +6,28 @@ import json
 import os
 import time
 
+import pika
+connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
+rabbit_channel = connection.channel()
+rabbit_channel.queue_declare(queue='py2_py3_queue')
+rabbit_channel.queue_declare(queue='py3_py2_queue')
+
+wake_word_detected = False
+def on_ping(ch, method, properties, body):
+        global wake_word_detected
+        wake_word_detected = True
+
+rabbit_channel.basic_consume(queue='py3_py2_queue', on_message_callback=on_ping, auto_ack=True)
+
 
 # Audio clip name 
 audio_clip_path = os.getcwd() + "/audio/recording.wav"
 
 AUDIO_RECOG =         True
-AUDIO_RECOG_API =     "http://128.205.43.183:5006/audio_recog"
-MAIN_API =     "http://128.205.43.183:5006/complete"
+AUDIO_RECOG_API =     "http://128.205.43.183:5001/audio_recog"
+MAIN_API =     "http://128.205.43.183:5001/complete"
 AUDIO_AUTH_USER =     "ninad"
-TRANSCRIBE_API =     "http://128.205.43.183:5006/transcribe"
+TRANSCRIBE_API =     "http://128.205.43.183:5001/transcribe"
 
 model = None
 
