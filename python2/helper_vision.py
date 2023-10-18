@@ -17,25 +17,7 @@ import cv2
 import requests
 import json
 import numpy as np
-
-
-# Load config parameters
-current_path = os.getcwd()
-yml_path = current_path[:-7] + "config.yml"
-
-with open(yml_path, 'r') as ymlfile:
-    #param = yaml.load(ymlfile)
-    try:
-        param = yaml.safe_load(ymlfile)
-        print(param , "-----------")
-    except yaml.YAMLError as e:
-        print(e, "-------")
-    
-FACE_RECOG = True #param["face_recog"]
-API_URL = "http://128.205.43.183:5006/face_recog" #param["face_recog_api"]  
-
-NAO_IP = param["ip"]
-NAO_PORT = param["port"]
+from helper import FACE_RECOG_API, FACE_RECOG, ip, port 
 
 width = 1280
 hieght = 960
@@ -47,7 +29,16 @@ resolution = 3
 colourspace = 11
 FPS = 5
 
-tts = ALProxy("ALVideoDevice", NAO_IP, NAO_PORT)
+
+def release():
+    global tts
+    for i in range(6):
+        tts.releaseImage("subscriberID_" + str(i))
+        tts.unsubscribe("subscriberID_" + str(i))
+
+tts = ALProxy("ALVideoDevice", ip, port)
+release()
+
 subscriberID = tts.subscribeCamera("subscriberID", camera_index, resolution,colourspace, FPS)
 
 tts.openCamera(camera_index)
@@ -74,7 +65,7 @@ def nao_vision():
                 image_bytes = image_encoded.tobytes()
 
                 # Send the image data to the server
-                response = requests.post(API_URL, files={'image': ('image.jpg', image_bytes)})
+                response = requests.post(FACE_RECOG_API, files={'image': ('image.jpg', image_bytes)})
 
                 if response.status_code == 200:
                     processed_image_data = np.frombuffer(response.content, np.uint8)

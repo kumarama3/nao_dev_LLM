@@ -8,14 +8,80 @@ yml_path = current_path[:-7] + "config.yml"
 with open(yml_path, 'r') as ymlfile:
     try:
         param = yaml.safe_load(ymlfile)
-        print(param)
     except yaml.YAMLError as e:
         print(e)
 
-ip = param["ip"]
-port = param["port"]
-PORT_SOCKET = param["py_port"]
-PORT_GUI = param["gui_port"]
+ip =                       param["nao_ip"]
+port =                     param["nao_port"]
+trail_port =               param["trail_port"]
+
+AUDIO_AUTH =               param["audio_auth"]
+AUDIO_AUTH_USER =          param["audio_authe_user"]
+FACE_RECOG =               param["face_recog"]
+VISION =                   param["vision"]
+TOUCH =                    param["touch"]
+
+AUDIO_AUTH_API =           param["audio_authen_api"].replace("PORT", str(trail_port))
+MAIN_API =                 param["main_authen_api"].replace("PORT", str(trail_port))
+TRANSCRIBE_API =           param["transcribe_api"].replace("PORT", str(trail_port))
+FACE_RECOG_API =           param["face_recog_api"].replace("PORT", str(trail_port))
+
+
+
+# Record Audio ---------------------------------------------------------------------------
+
+import pyaudio
+import struct 
+import wave
+import requests
+import json
+import os
+import time
+
+# Function to record audio
+def record_audio(path, duration):
+    print("----- Started Recording ----- ")
+    chunk = 1024
+    sample_format = pyaudio.paInt16
+    channels = 1
+    fs = 44100
+    
+    # Initialize the PyAudio object
+    p = pyaudio.PyAudio()
+    
+    # Open the audio stream
+    stream = p.open(format=sample_format,
+                    channels=channels,
+                    rate=fs,
+                    frames_per_buffer=chunk,
+                    input=True)
+    
+    frames = []
+    
+    # Record the audio for the specified duration
+    for i in range(int(fs / chunk * duration)):
+        data = stream.read(chunk)
+        frames.append(data)
+    
+    # Stop and close the audio stream
+    stream.stop_stream()
+    stream.close()
+    
+    # Terminate the PyAudio object
+    p.terminate()
+    
+    # Save the recorded audio as a WAV file
+    #file_path = os.path.join(path, filename)
+    
+    wf = wave.open(path, 'wb')
+    wf.setnchannels(channels)
+    wf.setsampwidth(p.get_sample_size(sample_format))
+    wf.setframerate(fs)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+    print('----- Completed Recording -----')
+
+
 
 # Load Nao functions ------------------------------------------------------
 import sys
@@ -23,7 +89,7 @@ sys.path.append("drivers")
 from drivers.nao import nao_driver
 
 # Init Drivers
-nao = nao_driver(ip, port, PORT_SOCKET, PORT_GUI)
+nao = nao_driver(ip, port)
 
 def initialise_nao():
     # Init all Proxies
@@ -44,6 +110,7 @@ def nao_startup_routine():
     
     # Stop listening 
     nao.ledStopListening()
+
 
 
 # Threading functions ----------------------------------------------------
@@ -110,15 +177,15 @@ class Touch_interrupts(object):
         #self.HandLBtouch_id=self.HandLBtouch.signal.connect(self.onHandLeftBackTouch)
 
         
-    def onMiddleTouch(self,qwe):
-        bool_okay=self.touch.signal.disconnect(self.touch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/WakeUp_1")
-        print(" Middle Touch detected ") 
-        time.sleep(4)
-        try: 
-            self.touch_id=self.touch.signal.connect(self.onMiddleTouch)
-        except:
-            print("error ---")
+    # def onMiddleTouch(self,qwe):
+    #     bool_okay=self.touch.signal.disconnect(self.touch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/WakeUp_1")
+    #     print(" Middle Touch detected ") 
+    #     time.sleep(4)
+    #     try: 
+    #         self.touch_id=self.touch.signal.connect(self.onMiddleTouch)
+    #     except:
+    #         print("error ---")
     
     def onFrontTouch(self,qwe):
         bool_okay=self.Fronttouch.signal.disconnect(self.Fronttouch_id)
@@ -130,78 +197,79 @@ class Touch_interrupts(object):
         except:
             print("error touch ")
 
-    def onRearTouch(self,qwe):
-        bool_okay=self.Reartouch.signal.disconnect(self.Reartouch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/MysticalPower_1")
-        print(" Rear Touch detected ")
-        time.sleep(4)
-        try:
-            self.Reartouch_id=self.Reartouch.signal.connect(self.onRearTouch)
-        except:
-            print("error ---")
+    # def onRearTouch(self,qwe):
+    #     bool_okay=self.Reartouch.signal.disconnect(self.Reartouch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/MysticalPower_1")
+    #     print(" Rear Touch detected ")
+    #     time.sleep(4)
+    #     try:
+    #         self.Reartouch_id=self.Reartouch.signal.connect(self.onRearTouch)
+    #     except:
+    #         print("error ---")
     
-    def onHandRightBackTouch(self,qwe):
-        bool_okay=self.HandRBtouch.signal.disconnect(self.HandRBtouch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/AirGuitar_1")
-        print(" Hand Right Back Touch detected ")
-        time.sleep(4)
-        try:
-            self.HandRBtouch_id=self.HandRBtouch.signal.connect(self.onHandRightBackTouch)
-        except:
-            print("error ---")
+    # def onHandRightBackTouch(self,qwe):
+    #     bool_okay=self.HandRBtouch.signal.disconnect(self.HandRBtouch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/AirGuitar_1")
+    #     print(" Hand Right Back Touch detected ")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandRBtouch_id=self.HandRBtouch.signal.connect(self.onHandRightBackTouch)
+    #     except:
+    #         print("error ---")
 
-    def onHandRightLeftTouch(self,qwe):
-        bool_okay=self.HandRLtouch.signal.disconnect(self.HandRLtouch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/AirJuggle_1")
-        print(" Hand Right Left Touch detected")
-        time.sleep(4)
-        try:
-            self.HandRLtouch_id=self.HandRLtouch.signal.connect(self.onHandRightLeftTouch)
-        except:
-            print("error ---")
+    # def onHandRightLeftTouch(self,qwe):
+    #     bool_okay=self.HandRLtouch.signal.disconnect(self.HandRLtouch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/AirJuggle_1")
+    #     print(" Hand Right Left Touch detected")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandRLtouch_id=self.HandRLtouch.signal.connect(self.onHandRightLeftTouch)
+    #     except:
+    #         print("error ---")
 
-    def onHandRightRightTouch(self,qwe):
-        bool_okay=self.HandRRtouch.signal.disconnect(self.HandRRtouch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/FunnyDancer_1")
-        print(" Hand Right Right Touch detected")
-        time.sleep(4)
-        try:
-            self.HandRRtouch_id=self.HandRRtouch.signal.connect(self.onHandRightRightTouch)
-        except:
-            print("error ---")
+    # def onHandRightRightTouch(self,qwe):
+    #     bool_okay=self.HandRRtouch.signal.disconnect(self.HandRRtouch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/FunnyDancer_1")
+    #     print(" Hand Right Right Touch detected")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandRRtouch_id=self.HandRRtouch.signal.connect(self.onHandRightRightTouch)
+    #     except:
+    #         print("error ---")
     
-    def onHandLeftBackTouch(self,qwe):
-        bool_okay=self.HandLBtouch.signal.disconnect(self.HandLBtouch_id)
-        self.beh.startBehavior("animations/Stand/Waiting/ShowMuscles_2")
-        print(" Hand Left Back Touch detected")
-        time.sleep(4)
-        try:
-            self.HandLBtouch_id=self.HandLBtouch.signal.connect(self.onHandLeftBackTouch)
-        except:
-            print("error ---")
+    # def onHandLeftBackTouch(self,qwe):
+    #     bool_okay=self.HandLBtouch.signal.disconnect(self.HandLBtouch_id)
+    #     self.beh.startBehavior("animations/Stand/Waiting/ShowMuscles_2")
+    #     print(" Hand Left Back Touch detected")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandLBtouch_id=self.HandLBtouch.signal.connect(self.onHandLeftBackTouch)
+    #     except:
+    #         print("error ---")
     
-    def onHandLeftLeftTouch(self,qwe):
-        bool_okay=self.HandLLtouch.signal.disconnect(self.HandLLtouch_id)
-        print(" Hand Left Left Touch detected")
-        self.beh.startBehavior("animations/Stand/Waiting/AirGuitar_1")
-        time.sleep(4)
-        try:
-            self.HandLLtouch_id=self.HandLLtouch.signal.connect(self.onHandLeftLeftTouch)
-        except:
-            print("error ---")
+    # def onHandLeftLeftTouch(self,qwe):
+    #     bool_okay=self.HandLLtouch.signal.disconnect(self.HandLLtouch_id)
+    #     print(" Hand Left Left Touch detected")
+    #     self.beh.startBehavior("animations/Stand/Waiting/AirGuitar_1")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandLLtouch_id=self.HandLLtouch.signal.connect(self.onHandLeftLeftTouch)
+    #     except:
+    #         print("error ---")
 
-    def onHandLeftRightTouch(self,qwe):
-        bool_okay=self.HandLRtouch.signal.disconnect(self.HandLRtouch_id)
-        print(" Hand Left Right Touch detected")
-        self.beh.startBehavior("animations/Stand/Waiting/KungFu_1")
-        time.sleep(4)
-        try:
-            self.HandLRtouch_id=self.HandLRtouch.signal.connect(self.onHandLeftRightTouch)
-        except:
-            print("error ---")
+    # def onHandLeftRightTouch(self,qwe):
+    #     bool_okay=self.HandLRtouch.signal.disconnect(self.HandLRtouch_id)
+    #     print(" Hand Left Right Touch detected")
+    #     self.beh.startBehavior("animations/Stand/Waiting/KungFu_1")
+    #     time.sleep(4)
+    #     try:
+    #         self.HandLRtouch_id=self.HandLRtouch.signal.connect(self.onHandLeftRightTouch)
+    #     except:
+    #         print("error ---")
 
 
-# RabbitMQ 
+# Response code 
+
 import json
 
 def nao_do(result):
@@ -210,20 +278,8 @@ def nao_do(result):
         print("------\n")
         print("Dance actions will be executed")
         nao.sayText_no_url( "I will start dancing now" )
-        # self.dance_sckt.start()
-        # self.play_song_sckt.start()
-        # ## Changes added for continous dance
-        # #     if not self.dance.is_alive():
-        # #         self.dance = threading.Thread( target= self.nao.dance )
-        # #         self.dance.start()
-        # while self.play_song_sckt.is_alive():
-        #     #if not self.dance.is_alive():
-        #     #    self.dance = 
-        #     pass
+        nao.start_dancing()
         
-        # self.dance_sckt = threading.Thread( target= nao.dance )
-        # self.play_song_sckt = threading.Thread( target= nao.play_song )
-
         nao.posture.goToPosture("Stand" , 0.4)
         nao.tab_reset()
         nao.ledStopListening()
@@ -297,12 +353,12 @@ def nao_do(result):
         nao.ledStopListening()
     
     elif result["func"] == "enable":
-        nao.sayText("Audio Visual Authentication is enabled now")
+        nao.sayText("Sorry, This functionality is disabled")
         nao.posture.goToPosture("StandInit" , 0.4)
         nao.ledStopListening()
     
     elif result["func"] == "disable":
-        nao.sayText("Audio Visual Authentication is disabled now")
+        nao.sayText("Sorry, This functionality is disabled")
         nao.posture.goToPosture("StandInit" , 0.4)
         nao.ledStopListening()
     
@@ -318,7 +374,7 @@ def nao_do(result):
         nao.ledStopListening()
 
     else:
-        nao.sayText( " Unknown command recived, Please try again  " )
+        nao.sayText("Unknown command recived from server" )
         print(" Request to nao_do function is not valid ")
         nao.posture.goToPosture("Stand" , 0.4)
         nao.ledStopListening()

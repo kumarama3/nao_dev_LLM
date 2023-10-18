@@ -1,36 +1,3 @@
-from helper_param import *
-from helper_chatGPT import gptResponse
-
-# Transcription -----------------
-import whisper
-
-if param["model"] == "Whisper":
-    model = whisper.load_model("medium.en")
-    print(" Whisper Model is loaded")
-
-elif param["model"] == "Server":
-    model = "Server"
-    print(" Server will be used ")
-
-else:
-    print(" Error in yaml file, Please check model type")
-
-
-def transcribe_whisper(recording_path, model):
-    print(" Whisper Transcribing ")
-    result = model.transcribe(recording_path) ## exception handling
-    print("Transcription Done")
-    question = result['text']
-    question = str(question).lower()
-    if "How can I help you".lower() in question:
-        question = question.replace("How can I help you".lower(), " ")
-    if "Can I help you".lower() in question:
-        question = question.replace("Can I help you".lower(), " ")
-    if "Hello".lower() in question:
-        question = question.replace("Hello".lower(), " ")
-    print(" Transcribed Text: " + question)
-    return question
-
 
 # Wake word detection -----------
 import pvporcupine

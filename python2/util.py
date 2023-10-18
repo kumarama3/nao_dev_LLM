@@ -6,18 +6,6 @@ import json
 import os
 import time
 
-import pika
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
-rabbit_channel = connection.channel()
-rabbit_channel.queue_declare(queue='py2_py3_queue')
-rabbit_channel.queue_declare(queue='py3_py2_queue')
-
-wake_word_detected = False
-def on_ping(ch, method, properties, body):
-        global wake_word_detected
-        wake_word_detected = True
-
-rabbit_channel.basic_consume(queue='py3_py2_queue', on_message_callback=on_ping, auto_ack=True)
 
 
 # Audio clip name 
@@ -28,17 +16,6 @@ AUDIO_RECOG_API =     "http://128.205.43.183:5001/audio_recog"
 MAIN_API =     "http://128.205.43.183:5001/complete"
 AUDIO_AUTH_USER =     "ninad"
 TRANSCRIBE_API =     "http://128.205.43.183:5001/transcribe"
-
-model = None
-
-pa = pyaudio.PyAudio()
-audio_stream = pa.open(
-    rate= 16000,
-    channels=1,
-    format=pyaudio.paInt16,
-    input=True,
-    frames_per_buffer=512)
-
 
 
 # Function to record audio
@@ -87,38 +64,4 @@ def record_audio(path, filename, duration):
     print('done recording')
 
 
-
-def process_audio( API_URL):
-
-    response = requests.post(API_URL, files={'audio': open(audio_clip_path, 'rb')})
-
-    if response.status_code == 200:
-        transcription = response.json()
-        out = transcription['results'][0]
-        print(out)
-    else:
-        out = " Error in transcription "
-        print("Error In transcription")
-        
-    prompt = ". Answer this in two or less sentences "
-    out += prompt
-    if "dance" in out.lower():
-        func = "Dance"
-        arg = None
-
-    elif "reset" in out.lower():
-        func = "Reset"
-        arg = None
-
-    else:
-        print("Getting Response from GPT")
-        try:
-            func, arg = "gpt" , "ans"#gptResponse(out)
-        except:
-            func = None
-            arg = None
-        
-        print(func, arg)
-        
-    return func, arg
 

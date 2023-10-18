@@ -15,15 +15,16 @@ class chatGPT(object):
 
         self.dance_sckt = None
         self.play_song_sckt = None
+        self.nao = None
 
     def load_function(self, nao, dance, play_song):
-        #self.dance = dance
-        #self.play_song = play_song
-
-        self.dance_sckt = threading.Thread( target= nao.dance )
-        self.play_song_sckt = threading.Thread( target= nao.play_song)
-
+        self.nao = nao
     
+    def start_dancing(self):
+        self.play_song_sckt = threading.Thread( target= self.nao.play_song)
+        self.play_song_sckt.start()
+        self.nao.dance()
+        
     def initSocket(self, PORT):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect(('127.0.0.1', PORT))
