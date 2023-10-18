@@ -1,7 +1,7 @@
 import struct
 import pika
 
-# Wake word detection -----------
+# Wake word detection model -----------
 import pvporcupine
 import pyaudio
 import os
@@ -12,7 +12,7 @@ porc_model_path_ppn = "../models/hello-kai_en_linux_v2_2_0.ppn"
 #porcupine = pvporcupine.create(access_key=pico_key, keyword_paths=[porc_model_path_ppn], model_path= porc_model_path_pv)
 porcupine = pvporcupine.create(access_key=pico_key, keyword_paths=[porc_model_path_ppn])
 
-# Initialize PyAudio and open a stream
+# Record audio --------------------------
 pa = pyaudio.PyAudio()
 audio_stream = pa.open(
     rate=porcupine.sample_rate,
@@ -21,6 +21,7 @@ audio_stream = pa.open(
     input=True,
     frames_per_buffer=porcupine.frame_length)
 
+# RabbitMQ ----------------------------------------
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
 rabbit_channel_in = connection.channel()
 rabbit_channel_out = connection.channel()
@@ -28,14 +29,7 @@ rabbit_channel_out = connection.channel()
 rabbit_channel_in.queue_declare(queue='py2_py3_queue')
 rabbit_channel_out.queue_declare(queue='py3_py2_queue')
 
-execution_complete = False
-def on_response(ch, method, properties, body):
-        global execution_complete
-        print("done")
-        execution_complete = True
-
-rabbit_channel_in.basic_consume(queue='py2_py3_queue', on_message_callback=on_response, auto_ack=True)
-
+# Main code starts here
 print("Start")
 try:
     while True:
@@ -45,7 +39,6 @@ try:
 
         if keyword_index >= 0:
             print("Wake Word detected")
-            execution_complete = False
             msg = "wake_word_dewtected"
             rabbit_channel_out.basic_publish(exchange='', routing_key='py3_py2_queue', body=msg)
 

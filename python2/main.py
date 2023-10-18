@@ -21,7 +21,6 @@ if VISION:
     Vision_ISR = threading.Thread(target= nao_vision )
     Vision_ISR.start()
 
-
 end_time = time.time()
 
 print(" Start Demo")
