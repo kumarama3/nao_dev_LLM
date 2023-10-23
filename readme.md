@@ -2,10 +2,10 @@
 
 ## Demo videos
 <a href="https://youtu.be/uPqchj8FFQk">
-   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/tree/LLM_integration/readme_refs/nao_thumbnail.png" width="90" height="120" />
+   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/blob/LLM_integration/readme_refs/nao_thumbnail.png" width="90" height="120" />
 </a>
 <a href="https://youtu.be/l6qVPrefCs0">
-   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/tree/LLM_integration/readme_refs/pepper_thumbnail.png" width="90" height="120" />
+   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/blob/LLM_integration/readme_refs/pepper_thumbnail.png" width="90" height="120" />
 </a>
 
 ## How to execute the code 
