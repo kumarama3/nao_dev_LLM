@@ -1,7 +1,12 @@
-# HRI (NAO environment)
+# HRI (Repository of our Nao & Pepper robot research project)
 
-All the projects related to NAO in the dev env, made by sougato & ninad are kept here. Feel free to peek into our code and refer. 
-Merge branch refers to the code merge between sougato-ninad branch.
+## Demo videos
+<a href="https://youtu.be/uPqchj8FFQk">
+   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/tree/LLM_integration/readme_refs/nao_thumbnail.png" width="90" height="120" />
+</a>
+<a href="https://youtu.be/l6qVPrefCs0">
+   <img src="https://github.com/hcicsebuffalo/nao_dev_LLM/tree/LLM_integration/readme_refs/pepper_thumbnail.png" width="90" height="120" />
+</a>
 
 ## How to execute the code 
 - Go to the folder chatgpt, execute the file hri_main.py. 
