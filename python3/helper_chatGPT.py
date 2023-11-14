@@ -7,7 +7,7 @@ import json
 
 
 # Context file path
-context_file_path = "../content_handbook.txt"
+context_file_path = "../context_handbook.txt"
 
 def read_text_file(file_path):
     with open(file_path, 'r') as file:
